@@ -2199,13 +2199,17 @@
     }
 
     let appCovers = {};       // { appId: coverUrl }
+    let appLogos = {};        // { appId: logoUrl }
     let appScreenCounts = {}; // { appId: uploadedCount }
 
     async function loadAppCovers() {
       if (!dbClient) return;
       try {
-        const { data } = await dbClient.from('app_covers').select('app_id, cover_url');
-        (data || []).forEach(r => { appCovers[r.app_id] = r.cover_url; });
+        const { data } = await dbClient.from('app_covers').select('app_id, cover_url, logo_url');
+        (data || []).forEach(r => {
+          appCovers[r.app_id] = r.cover_url;
+          appLogos[r.app_id] = r.logo_url || '';
+        });
       } catch (e) { console.error(e); }
     }
 
@@ -2238,8 +2242,9 @@
                <div style="width:60px;height:60px;border-radius:16px;background:${app.color}22;border:1px solid ${app.color}44;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:700;color:${app.color}">${initials}</div>
                <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${count} screen${count !== 1 ? 's' : ''}</div>
              </div>${seeMore}`;
-        const iconHtml = app.logo_url
-          ? `<img src="${app.logo_url}" alt="${app.app}">`
+        const logoUrl = appLogos[app.id] || '';
+        const iconHtml = logoUrl
+          ? `<img src="${logoUrl}" alt="${app.app}">`
           : `<span style="color:${app.color};font-size:15px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif">${initials}</span>`;
         return `
         <div class="phone-card" style="animation-delay:${i * 0.05}s" onclick="openApp('${app.id}')">
@@ -2368,8 +2373,9 @@
 
       const initials = currentApp.app.split(' ').map(w => w[0]).join('').slice(0, 2);
       const iconEl = document.getElementById('detail-app-icon');
-      iconEl.innerHTML = currentApp.logo_url
-        ? `<img src="${currentApp.logo_url}" alt="${currentApp.app}">`
+      const appLogoUrl = appLogos[appId] || '';
+      iconEl.innerHTML = appLogoUrl
+        ? `<img src="${appLogoUrl}" alt="${currentApp.app}">`
         : `<span style="color:${currentApp.color};font-size:16px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif">${initials}</span>`;
 
       document.getElementById('detail-app-name').textContent = currentApp.app;

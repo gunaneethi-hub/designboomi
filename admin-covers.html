@@ -1041,11 +1041,17 @@
     }
 
     // ── LOAD ──────────────────────────────────────────────
+    let logos = {};
+
     async function loadCovers() {
       const { data, error } = await db.from('app_covers').select('*');
       if (error) { console.error(error.message); return; }
       covers = {};
-      (data || []).forEach(r => { covers[r.app_id] = r.cover_url; });
+      logos = {};
+      (data || []).forEach(r => {
+        covers[r.app_id] = r.cover_url;
+        logos[r.app_id] = r.logo_url || '';
+      });
       const count = Object.values(covers).filter(Boolean).length;
       document.getElementById('covers-status').textContent = `${count} / ${APPS.length} apps covered`;
     }
@@ -1087,16 +1093,33 @@
               </div>
               <div class="card-sub">${app.category}</div>
               <div class="upload-area">
-                <span>Click to upload</span>
+                <span>Click to upload cover</span>
                 <input type="file" accept="image/*" onchange="handleCoverUpload(event,'${app.id}')">
               </div>
               <div class="divider">or paste URL</div>
               <input type="text" class="url-input" id="cover-url-${app.id}" placeholder="https://..." value="${url}">
               <div class="card-actions">
-                <button class="btn-save" onclick="saveCover('${app.id}')">Save</button>
+                <button class="btn-save" onclick="saveCover('${app.id}')">Save Cover</button>
                 ${has ? `<button class="btn-remove" onclick="removeCover('${app.id}')">Remove</button>` : ''}
               </div>
               <div class="feedback" id="cover-fb-${app.id}"></div>
+
+              <div class="divider">App Logo</div>
+              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                ${logos[app.id]
+                  ? `<img src="${logos[app.id]}" id="logo-preview-${app.id}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid var(--border)">`
+                  : `<div id="logo-preview-${app.id}" style="width:40px;height:40px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3)">?</div>`}
+                <div class="upload-area" style="flex:1;margin:0;">
+                  <span>Upload logo</span>
+                  <input type="file" accept="image/*" onchange="handleLogoUpload(event,'${app.id}')">
+                </div>
+              </div>
+              <input type="text" class="url-input" id="logo-url-${app.id}" placeholder="https://logo.png" value="${logos[app.id] || ''}">
+              <div class="card-actions">
+                <button class="btn-save" onclick="saveLogo('${app.id}')">Save Logo</button>
+                ${logos[app.id] ? `<button class="btn-remove" onclick="removeLogo('${app.id}')">Remove</button>` : ''}
+              </div>
+              <div class="feedback" id="logo-fb-${app.id}"></div>
             </div>
           </div>`;
       }).join('');
@@ -1330,11 +1353,40 @@
 
     async function removeCover(appId) {
       if (!confirm('Remove this cover?')) return;
-      await db.from('app_covers').delete().eq('app_id', appId);
+      await db.from('app_covers').upsert({ app_id: appId, cover_url: '' }, { onConflict: 'app_id' });
       covers[appId] = '';
       await loadCovers();
       renderCoversGrid();
       showToast('Cover removed');
+    }
+
+    // ── LOGO ──────────────────────────────────────────────
+    async function handleLogoUpload(e, appId) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const url = await uploadToStorage(file, appId + '-logo');
+      document.getElementById(`logo-url-${appId}`).value = url;
+      const preview = document.getElementById(`logo-preview-${appId}`);
+      preview.outerHTML = `<img src="${url}" id="logo-preview-${appId}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid var(--border)">`;
+    }
+
+    async function saveLogo(appId) {
+      const url = document.getElementById(`logo-url-${appId}`).value.trim();
+      if (!url) { setFb('logo', appId, 'Add a logo first', true); return; }
+      const { error } = await db.from('app_covers').upsert({ app_id: appId, logo_url: url }, { onConflict: 'app_id' });
+      if (error) { setFb('logo', appId, error.message, true); return; }
+      logos[appId] = url;
+      setFb('logo', appId, 'Logo saved!', false);
+      showToast(`✓ ${APPS.find(a => a.id === appId).app} logo saved`);
+    }
+
+    async function removeLogo(appId) {
+      if (!confirm('Remove this logo?')) return;
+      await db.from('app_covers').upsert({ app_id: appId, logo_url: '' }, { onConflict: 'app_id' });
+      logos[appId] = '';
+      await loadCovers();
+      renderCoversGrid();
+      showToast('Logo removed');
     }
 
     // ── HELPERS ───────────────────────────────────────────
