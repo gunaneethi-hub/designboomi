@@ -900,21 +900,7 @@
     const SUPABASE_KEY = 'sb_publishable_P0cNTIVMw_Uxy5U95myPDw_XNtc99yO';
     const ADMIN_PASSWORD = 'designboomi2024';
 
-    const APPS = [
-      { id: 'cred', app: 'CRED', category: 'fintech', color: '#E8B84B' },
-      { id: 'swiggy', app: 'Swiggy', category: 'food', color: '#FC8019' },
-      { id: 'phonepe', app: 'PhonePe', category: 'fintech', color: '#5F259F' },
-      { id: 'meesho', app: 'Meesho', category: 'ecomm', color: '#9B2335' },
-      { id: 'zepto', app: 'Zepto', category: 'food', color: '#7B2FF7' },
-      { id: 'zomato', app: 'Zomato', category: 'food', color: '#E23744' },
-      { id: 'yono', app: 'YONO SBI', category: 'fintech', color: '#2E5FA3' },
-      { id: 'unacademy', app: 'Unacademy', category: 'edtech', color: '#08BD80' },
-      { id: 'instamart', app: 'Swiggy Instamart', category: 'food', color: '#FC8019' },
-      { id: 'byjus', app: "Byju's", category: 'edtech', color: '#3E3E8F' },
-      { id: 'groww', app: 'Groww', category: 'fintech', color: '#00D09C' },
-      { id: 'juspay', app: 'Juspay', category: 'fintech', color: '#1565C0' },
-      { id: 'nykaa', app: 'Nykaa', category: 'ecomm', color: '#FC2779' },
-    ];
+    let supabaseApps = []; // all apps loaded from Supabase
 
     let db = null;
     let covers = {};        // { appId: url }
@@ -951,45 +937,27 @@
     }
 
     // ── APPS ──────────────────────────────────────────────
-    let supabaseApps = []; // apps stored in Supabase
-
     async function loadApps() {
       const { data, error } = await db.from('apps').select('*').order('created_at', { ascending: true });
       if (error) { console.error(error.message); return; }
       supabaseApps = data || [];
-      document.getElementById('apps-status').textContent =
-        `${APPS.length} built-in · ${supabaseApps.length} custom`;
+      document.getElementById('apps-status').textContent = `${supabaseApps.length} apps`;
     }
 
     function renderAppsList() {
       const list = document.getElementById('apps-list');
-
-      const builtInHtml = APPS.map(app => `
-        <div class="app-row">
+      if (!supabaseApps.length) {
+        list.innerHTML = `<div style="font-size:13px;color:var(--text3);padding:16px 0;">No apps yet — add one above.</div>`;
+        return;
+      }
+      list.innerHTML = supabaseApps.map(app => `
+        <div class="app-row" id="app-row-${app.id}">
           <div class="app-row-color" style="background:${app.color}"></div>
-          <div class="app-row-name">${app.app}</div>
+          <div class="app-row-name">${app.name}</div>
           <div class="app-row-id">${app.id}</div>
           <div class="app-row-cat">${app.category}</div>
-          <span class="app-row-source hardcoded">Built-in</span>
+          <button class="app-row-delete" onclick="deleteApp('${app.id}')">Remove</button>
         </div>`).join('');
-
-      const customHtml = supabaseApps.length
-        ? supabaseApps.map(app => `
-          <div class="app-row" id="app-row-${app.id}">
-            <div class="app-row-color" style="background:${app.color}"></div>
-            <div class="app-row-name">${app.name}</div>
-            <div class="app-row-id">${app.id}</div>
-            <div class="app-row-cat">${app.category}</div>
-            <span class="app-row-source supabase">Custom</span>
-            <button class="app-row-delete" onclick="deleteApp('${app.id}')">Remove</button>
-          </div>`).join('')
-        : `<div style="font-size:13px;color:var(--text3);padding:16px 0;">No custom apps yet — add one above.</div>`;
-
-      list.innerHTML = `
-        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Built-in Apps (${APPS.length})</div>
-        ${builtInHtml}
-        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 10px;">Custom Apps (${supabaseApps.length})</div>
-        ${customHtml}`;
     }
 
     async function addApp() {
@@ -1027,8 +995,7 @@
     }
 
     function updateAppsStatus() {
-      document.getElementById('apps-status').textContent =
-        `${APPS.length} built-in · ${supabaseApps.length} custom`;
+      document.getElementById('apps-status').textContent = `${supabaseApps.length} apps`;
     }
 
     function setFb(type, id, msg, isError) {
@@ -1053,34 +1020,34 @@
         logos[r.app_id] = r.logo_url || '';
       });
       const count = Object.values(covers).filter(Boolean).length;
-      document.getElementById('covers-status').textContent = `${count} / ${APPS.length} apps covered`;
+      document.getElementById('covers-status').textContent = `${count} / ${supabaseApps.length} apps covered`;
     }
 
     async function loadCuratedScreens() {
       const { data, error } = await db.from('screens').select('*').eq('is_curated', true).order('created_at', { ascending: true });
       if (error) { console.error(error.message); return; }
       curatedScreens = {};
-      APPS.forEach(a => { curatedScreens[a.id] = []; });
+      supabaseApps.forEach(a => { curatedScreens[a.id] = []; });
       (data || []).forEach(r => {
         if (!curatedScreens[r.app_id]) curatedScreens[r.app_id] = [];
         curatedScreens[r.app_id].push(r);
       });
       const total = Object.values(curatedScreens).reduce((n, arr) => n + arr.length, 0);
-      document.getElementById('screens-status').textContent = `${total} screens across ${APPS.length} apps`;
+      document.getElementById('screens-status').textContent = `${total} screens across ${supabaseApps.length} apps`;
     }
 
     // ── RENDER COVERS ─────────────────────────────────────
     function renderCoversGrid() {
       const grid = document.getElementById('covers-grid');
-      grid.innerHTML = APPS.map(app => {
-        const initials = app.app.split(' ').map(w => w[0]).join('').slice(0, 2);
+      grid.innerHTML = supabaseApps.map(app => {
+        const initials = app.name.split(' ').map(w => w[0]).join('').slice(0, 2);
         const url = covers[app.id] || '';
         const has = !!url;
         return `
           <div class="cover-card" id="cover-card-${app.id}">
             <div class="cover-preview" style="background:linear-gradient(135deg,${app.color}33 0%,${app.color}08 60%,#0C0C0E 100%)">
               ${has
-            ? `<img src="${url}" id="cover-img-${app.id}" alt="${app.app}">`
+            ? `<img src="${url}" id="cover-img-${app.id}" alt="${app.name}">`
             : `<div class="cover-placeholder" id="cover-ph-${app.id}">
                     <div class="cover-initials" style="color:${app.color}">${initials}</div>
                     <div class="no-img-label">No cover</div>
@@ -1088,7 +1055,7 @@
             </div>
             <div class="card-body">
               <div class="card-title">
-                ${app.app}
+                ${app.name}
                 <span class="img-status ${has ? 'live' : 'empty'}" id="cover-status-${app.id}">${has ? 'Live' : 'Empty'}</span>
               </div>
               <div class="card-sub">${app.category}</div>
@@ -1128,8 +1095,8 @@
     // ── RENDER SCREENS CONTAINER ──────────────────────────
     function renderScreensContainer() {
       const container = document.getElementById('screens-container');
-      container.innerHTML = APPS.map(app => {
-        const initials = app.app.split(' ').map(w => w[0]).join('').slice(0, 2);
+      container.innerHTML = supabaseApps.map(app => {
+        const initials = app.name.split(' ').map(w => w[0]).join('').slice(0, 2);
         const screens = curatedScreens[app.id] || [];
         const screensHtml = screens.map(s => `
           <div class="screen-card" id="sc-${s.id}">
@@ -1144,7 +1111,7 @@
           <div class="app-group" id="app-group-${app.id}">
             <div class="app-group-header">
               <div class="app-dot" style="background:${app.color}"></div>
-              <div class="app-group-name">${app.app}</div>
+              <div class="app-group-name">${app.name}</div>
               <div class="app-screen-count" id="screen-count-${app.id}">${screens.length} screen${screens.length !== 1 ? 's' : ''}</div>
             </div>
             <div class="screens-row" id="screens-row-${app.id}">
@@ -1271,7 +1238,7 @@
       // Re-render this app's row
       refreshAppRow(appId);
       updateScreensStatus();
-      showToast(`✓ "${name}" added to ${APPS.find(a => a.id === appId).app}`);
+      showToast(`✓ "${name}" added to ${supabaseApps.find(a => a.id === appId)?.name}`);
     }
 
     async function uploadToStorage(file, appId) {
@@ -1317,8 +1284,8 @@
 
     // ── REFRESH APP ROW ───────────────────────────────────
     function refreshAppRow(appId) {
-      const app = APPS.find(a => a.id === appId);
-      const initials = app.app.split(' ').map(w => w[0]).join('').slice(0, 2);
+      const app = supabaseApps.find(a => a.id === appId);
+      const initials = app.name.split(' ').map(w => w[0]).join('').slice(0, 2);
       const screens = curatedScreens[appId] || [];
       const screensHtml = screens.map(s => `
         <div class="screen-card" id="sc-${s.id}">
@@ -1348,7 +1315,7 @@
       document.getElementById(`cover-status-${appId}`).className = 'img-status live';
       setFb('cover', appId, 'Saved!', false);
       updateCoversStatus();
-      showToast(`✓ ${APPS.find(a => a.id === appId).app} cover saved`);
+      showToast(`✓ ${supabaseApps.find(a => a.id === appId)?.name} cover saved`);
     }
 
     async function removeCover(appId) {
@@ -1377,7 +1344,7 @@
       if (error) { setFb('logo', appId, error.message, true); return; }
       logos[appId] = url;
       setFb('logo', appId, 'Logo saved!', false);
-      showToast(`✓ ${APPS.find(a => a.id === appId).app} logo saved`);
+      showToast(`✓ ${supabaseApps.find(a => a.id === appId)?.name} logo saved`);
     }
 
     async function removeLogo(appId) {
@@ -1395,12 +1362,12 @@
 
     function updateCoversStatus() {
       const count = Object.values(covers).filter(Boolean).length;
-      document.getElementById('covers-status').textContent = `${count} / ${APPS.length} apps covered`;
+      document.getElementById('covers-status').textContent = `${count} / ${supabaseApps.length} apps covered`;
     }
 
     function updateScreensStatus() {
       const total = Object.values(curatedScreens).reduce((n, arr) => n + arr.length, 0);
-      document.getElementById('screens-status').textContent = `${total} screens across ${APPS.length} apps`;
+      document.getElementById('screens-status').textContent = `${total} screens across ${supabaseApps.length} apps`;
     }
 
     function editScreenName(el, screenId, appId) {

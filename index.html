@@ -2027,78 +2027,7 @@
   </div>
 
   <script>
-    const MOBILE_APPS = [
-      {
-        id: 'cred', app: 'CRED', category: 'fintech', color: '#E8B84B', screens: []
-      },
-      {
-        id: 'swiggy', app: 'Swiggy', category: 'food', color: '#FC8019', screens: []
-      },
-      {
-        id: 'phonepe', app: 'PhonePe', category: 'fintech', color: '#5F259F', screens: [
-          { id: 3, screen: 'Payment Home', type: 'dashboard', colors: ['#5F259F', '#FFFFFF', '#F8F8F8', '#34A853', '#1A1A1A'], fonts: ['Noto Sans', 'Roboto'], spacing: [8, 12, 16, 24, 32], components: ['UPI Transfer Card', 'Recent Contacts', 'Quick Actions Grid', 'Balance Display', 'Promo Banner'] },
-          { id: 11, screen: 'Transaction History', type: 'list', colors: ['#5F259F', '#FFFFFF', '#F5F5F5', '#34A853', '#E53935'], fonts: ['Noto Sans', 'Roboto'], spacing: [8, 16, 20, 28, 40], components: ['Date Separator', 'Transaction Row', 'Amount Display', 'Status Badge', 'Filter Button'] },
-        ]
-      },
-      {
-        id: 'meesho', app: 'Meesho', category: 'ecomm', color: '#9B2335', screens: [
-          { id: 4, screen: 'Product Detail', type: 'detail', colors: ['#9B2335', '#FFFFFF', '#F5F5F5', '#FFA234', '#333333'], fonts: ['Poppins', 'Noto Sans'], spacing: [12, 16, 20, 28, 40], components: ['Image Carousel', 'Price Tag', 'Size Selector', 'Add to Cart Button', 'Review Stars'] },
-          { id: 12, screen: 'Supplier Dashboard', type: 'dashboard', colors: ['#9B2335', '#FFFFFF', '#FFF5F5', '#4CAF50', '#FF9800'], fonts: ['Poppins', 'DM Sans'], spacing: [12, 16, 24, 32, 48], components: ['Revenue Chart', 'Order Stats', 'Product Table', 'Notification Bell', 'Withdraw Button'] },
-        ]
-      },
-      {
-        id: 'zepto', app: 'Zepto', category: 'food', color: '#7B2FF7', screens: [
-          { id: 5, screen: 'Cart Checkout', type: 'checkout', colors: ['#7B2FF7', '#FFFFFF', '#F8F6FE', '#00C853', '#FF3B30'], fonts: ['DM Sans', 'Gilroy'], spacing: [8, 16, 20, 24, 48], components: ['Product List', 'Quantity Stepper', 'Promo Code Field', 'Order Summary', 'Pay Button'] },
-          { id: 15, screen: 'Home Feed', type: 'dashboard', colors: ['#7B2FF7', '#FFFFFF', '#F8F6FE', '#FF6D00', '#00C853'], fonts: ['DM Sans', 'Gilroy'], spacing: [8, 12, 16, 24, 40], components: ['Delivery Timer', 'Category Scroll', 'Flash Sale Banner', 'Product Grid', 'Cart FAB'] },
-        ]
-      },
-      {
-        id: 'zomato', app: 'Zomato', category: 'food', color: '#E23744', screens: [
-          { id: 6, screen: 'Onboarding', type: 'onboarding', colors: ['#E23744', '#FFFFFF', '#1C1C1C', '#FFF3F4', '#F5A623'], fonts: ['Okra', 'Helvetica Neue'], spacing: [16, 24, 32, 40, 56], components: ['Illustration', 'Progress Dots', 'Headline Text', 'Subtext', 'Primary CTA'] },
-          { id: 16, screen: 'Restaurant Detail', type: 'detail', colors: ['#E23744', '#FFFFFF', '#F8F8F8', '#1C1C1C', '#FF7A00'], fonts: ['Okra', 'Helvetica Neue'], spacing: [12, 16, 20, 28, 44], components: ['Hero Image', 'Rating Bar', 'Menu Category Tabs', 'Dish Card', 'Add Button'] },
-        ]
-      },
-      {
-        id: 'yono', app: 'YONO SBI', category: 'fintech', color: '#2E5FA3', screens: [
-          { id: 7, screen: 'Login Screen', type: 'auth', colors: ['#2E5FA3', '#FFFFFF', '#F0F4FA', '#1A1A1A', '#E53935'], fonts: ['Roboto', 'Noto Sans'], spacing: [8, 16, 20, 32, 48], components: ['Logo Header', 'MPIN Input', 'Biometric Button', 'Forgot Link', 'Help CTA'] },
-        ]
-      },
-      {
-        id: 'unacademy', app: 'Unacademy', category: 'edtech', color: '#08BD80', screens: [
-          { id: 8, screen: 'Course Browse', type: 'browse', colors: ['#08BD80', '#0F0F0F', '#1C1C1C', '#FFFFFF', '#FFB800'], fonts: ['Source Sans Pro', 'Inter'], spacing: [12, 16, 24, 32, 44], components: ['Educator Card', 'Progress Bar', 'Category Filter', 'Enrolled Badge', 'Bookmark Icon'] },
-          { id: 20, screen: 'Live Class', type: 'video', colors: ['#08BD80', '#0F0F0F', '#1C1C1C', '#FFFFFF', '#FF5722'], fonts: ['Source Sans Pro', 'Roboto'], spacing: [8, 12, 20, 28, 40], components: ['Video Player', 'Chat Panel', 'Raise Hand Button', 'Participant Count', 'Subject Tag'] },
-        ]
-      },
-      {
-        id: 'instamart', app: 'Swiggy Instamart', category: 'food', color: '#FC8019', screens: [
-          { id: 10, screen: 'Category Grid', type: 'browse', colors: ['#FC8019', '#FFFFFF', '#F9F9F9', '#2D2D2D', '#00C4B3'], fonts: ['Proxima Nova', 'Swiggy Regular'], spacing: [8, 12, 16, 20, 32], components: ['Hero Banner', 'Category Icons', 'Product Card', 'Discount Pill', 'Search Bar'] },
-        ]
-      },
-      {
-        id: 'byjus', app: "Byju's", category: 'edtech', color: '#3E3E8F', screens: [
-          { id: 13, screen: 'Learning Path', type: 'dashboard', colors: ['#3E3E8F', '#FFFFFF', '#F5F5FF', '#FFB300', '#E53935'], fonts: ['Gilroy', 'Nunito'], spacing: [12, 16, 24, 36, 48], components: ['Chapter Cards', 'Progress Ring', 'Video Thumbnail', 'Quiz CTA', 'Achievement Badge'] },
-          { id: 21, screen: 'Test Screen', type: 'form', colors: ['#3E3E8F', '#FFFFFF', '#F5F5FF', '#4CAF50', '#F44336'], fonts: ['Gilroy', 'Nunito'], spacing: [12, 16, 24, 36, 56], components: ['Question Card', 'Option Buttons', 'Timer Bar', 'Progress Indicator', 'Submit Button'] },
-        ]
-      },
-      {
-        id: 'groww', app: 'Groww', category: 'fintech', color: '#00D09C', screens: [
-          { id: 14, screen: 'Portfolio View', type: 'dashboard', colors: ['#00D09C', '#FFFFFF', '#F9F9F9', '#1A1A1A', '#EB5757'], fonts: ['DM Sans', 'Nunito Sans'], spacing: [8, 16, 20, 24, 40], components: ['P&L Card', 'Stock List Row', 'Gain/Loss Pill', 'Portfolio Pie', 'Invest Button'] },
-          { id: 19, screen: 'SIP Setup', type: 'form', colors: ['#00D09C', '#FFFFFF', '#F9F9F9', '#1A1A1A', '#6C63FF'], fonts: ['DM Sans', 'Nunito Sans'], spacing: [12, 16, 24, 32, 48], components: ['Amount Slider', 'Date Picker', 'Fund Card', 'SIP Summary', 'Start SIP Button'] },
-        ]
-      },
-      {
-        id: 'juspay', app: 'Juspay', category: 'fintech', color: '#1565C0', screens: [
-          { id: 17, screen: 'Payment Sheet', type: 'checkout', colors: ['#1565C0', '#FFFFFF', '#F5F9FF', '#4CAF50', '#1A1A1A'], fonts: ['Roboto', 'Noto Sans'], spacing: [8, 16, 20, 32, 48], components: ['Payment Methods List', 'UPI Input', 'Card Form', 'Amount Summary', 'Pay Now Button'] },
-          { id: 23, screen: 'Success Screen', type: 'success', colors: ['#1565C0', '#4CAF50', '#FFFFFF', '#F5F9FF', '#1A1A1A'], fonts: ['Roboto', 'Noto Sans'], spacing: [16, 24, 32, 48, 64], components: ['Success Animation', 'Transaction ID', 'Amount Display', 'Share Button', 'Done CTA'] },
-        ]
-      },
-      {
-        id: 'nykaa', app: 'Nykaa', category: 'ecomm', color: '#FC2779', screens: [
-          { id: 18, screen: 'Product Browse', type: 'browse', colors: ['#FC2779', '#FFFFFF', '#FFF5F9', '#1A1A1A', '#FFD700'], fonts: ['Nunito', 'Poppins'], spacing: [8, 12, 16, 24, 36], components: ['Filter Bar', 'Product Grid', 'Discount Badge', 'Wishlist Icon', 'Brand Logo'] },
-          { id: 22, screen: 'Checkout', type: 'checkout', colors: ['#FC2779', '#FFFFFF', '#FFF5F9', '#1A1A1A', '#4CAF50'], fonts: ['Nunito', 'Poppins'], spacing: [12, 16, 20, 28, 44], components: ['Order Summary', 'Address Card', 'Coupon Input', 'Payment Options', 'Place Order Button'] },
-        ]
-      },
-    ];
+    let MOBILE_APPS = []; // loaded from Supabase apps table
 
     let currentApp = null;
     let currentScreen = null;
@@ -2115,6 +2044,15 @@
       dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch (e) {
       console.error('Supabase init failed:', e);
+    }
+
+    async function loadMobileApps() {
+      if (!dbClient) return;
+      try {
+        const { data, error } = await dbClient.from('apps').select('*').order('created_at', { ascending: true });
+        if (error) { console.error(error); return; }
+        MOBILE_APPS = (data || []).map(a => ({ id: a.id, app: a.name, category: a.category, color: a.color }));
+      } catch (e) { console.error(e); }
     }
 
     async function loadScreensFromSupabase(appId) {
@@ -2276,7 +2214,7 @@
     function filterCards() {
       const search = document.getElementById('search-input').value.toLowerCase();
       const filtered = MOBILE_APPS.filter(app =>
-        !search || app.app.toLowerCase().includes(search) || app.screens.some(s => s.screen.toLowerCase().includes(search))
+        !search || app.app.toLowerCase().includes(search)
       );
       buildGrid(filtered);
     }
@@ -2690,7 +2628,8 @@ Identify as many real colors as visible. Be specific about components you see. R
         </div>`;
       grid.innerHTML = skel.repeat(12);
     })();
-    Promise.all([loadAppCovers(), loadScreenCounts()])
+    loadMobileApps()
+      .then(() => Promise.all([loadAppCovers(), loadScreenCounts()]))
       .catch(e => console.error('Init error:', e))
       .finally(() => filterCards());
   </script>
