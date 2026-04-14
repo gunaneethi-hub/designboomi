@@ -2205,7 +2205,7 @@
     async function loadAppCovers() {
       if (!dbClient) return;
       try {
-        const { data } = await dbClient.from('app_covers').select('app_id, cover_url, logo_url');
+        const { data } = await dbClient.from('app_covers').select('*');
         (data || []).forEach(r => {
           appCovers[r.app_id] = r.cover_url;
           appLogos[r.app_id] = r.logo_url || '';
