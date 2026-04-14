@@ -1673,10 +1673,27 @@
       letter-spacing: -0.3px;
     }
 
+    .detail-app-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+
     .detail-app-count {
       font-size: 11px;
       color: var(--text3);
-      margin-top: 1px;
+    }
+
+    .detail-app-category {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      background: var(--accent)18;
+      padding: 2px 7px;
+      border-radius: 20px;
     }
 
     .detail-header-right {
@@ -1931,7 +1948,10 @@
       <div class="detail-app-info">
         <div class="detail-app-icon" id="detail-app-icon"></div>
         <div class="detail-app-name" id="detail-app-name"></div>
-        <div class="detail-app-count" id="detail-app-count"></div>
+        <div class="detail-app-meta">
+          <div class="detail-app-count" id="detail-app-count"></div>
+          <div class="detail-app-category" id="detail-app-category"></div>
+        </div>
       </div>
       <div class="detail-header-right">
         <button class="share-btn" onclick="shareScreen()">
@@ -2329,6 +2349,7 @@
       document.getElementById('detail-app-name').textContent = currentApp.app;
       const count = (uploadedScreens[appId] || []).length;
       document.getElementById('detail-app-count').textContent = `${count} screen${count !== 1 ? 's' : ''}`;
+      document.getElementById('detail-app-category').textContent = currentApp.category || '';
 
       buildPreviewScreens();
       document.getElementById('detail-view').classList.add('open');
@@ -2628,8 +2649,7 @@ Identify as many real colors as visible. Be specific about components you see. R
         </div>`;
       grid.innerHTML = skel.repeat(12);
     })();
-    loadMobileApps()
-      .then(() => Promise.all([loadAppCovers(), loadScreenCounts()]))
+    Promise.all([loadMobileApps(), loadAppCovers(), loadScreenCounts()])
       .catch(e => console.error('Init error:', e))
       .finally(() => filterCards());
   </script>
