@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DesignBoomi — Admin</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&display=swap"
+    rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0C0C0E;
+      --surface: #141416;
+      --surface2: #1C1C1F;
+      --border: #2A2A2F;
+      --text: #F0EFE8;
+      --text2: #8C8B85;
+      --text3: #5A5A55;
+      --accent: #FF5C2B;
+      --green: #2DD4AA;
+      --red: #FF4B4B;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 15px;
+      min-height: 100vh;
+    }
+
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(12, 12, 14, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 60px;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 16px;
+    }
+
+    .logo span {
+      color: var(--accent);
+    }
+
+    .nav-tag {
+      font-size: 11px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text3);
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* AUTH */
+    #auth-gate {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(100vh - 60px);
+    }
+
+    .auth-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px;
+      width: 360px;
+      text-align: center;
+    }
+
+    .auth-card h2 {
+      font-size: 20px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .auth-card p {
+      font-size: 13px;
+      color: var(--text2);
+      margin-bottom: 24px;
+    }
+
+    .auth-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 15px;
+      padding: 12px 16px;
+      outline: none;
+      margin-bottom: 12px;
+    }
+
+    .auth-input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.85;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .auth-error {
+      font-size: 13px;
+      color: var(--red);
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* MAIN */
+    #main-content {
+      display: none;
+    }
+
+    .tabs-bar {
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+    }
+
+    .tab-btn {
+      padding: 16px 20px;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text3);
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      transition: color 0.2s;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover {
+      color: var(--text2);
+    }
+
+    .tab-btn.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-panel {
+      display: none;
+      padding: 2rem;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .tab-panel.active {
+      display: block;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+    }
+
+    .section-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .section-header p {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+
+    .status-pill {
+      font-size: 12px;
+      color: var(--text2);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 14px;
+      white-space: nowrap;
+    }
+
+    /* COVERS GRID */
+    .covers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+    }
+
+    .cover-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .cover-preview {
+      width: 100%;
+      aspect-ratio: 3/4;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cover-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .cover-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: flex-end;
+      padding: 20px;
+      gap: 6px;
+    }
+
+    .cover-initials {
+      font-size: 56px;
+      font-weight: 800;
+      line-height: 1;
+      opacity: 0.9;
+    }
+
+    .no-img-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .card-body {
+      padding: 14px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-sub {
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 12px;
+      text-transform: capitalize;
+    }
+
+    .img-status {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .img-status.live {
+      background: rgba(45, 212, 170, 0.15);
+      color: var(--green);
+    }
+
+    .img-status.empty {
+      background: rgba(90, 90, 85, 0.2);
+      color: var(--text3);
+    }
+
+    .upload-area {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 9px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 12px;
+      color: var(--text3);
+      margin-bottom: 8px;
+      transition: border-color 0.2s, color 0.2s;
+      position: relative;
+    }
+
+    .upload-area:hover {
+      border-color: var(--accent);
+      color: var(--text2);
+    }
+
+    .upload-area input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .divider {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text3);
+      margin-bottom: 8px;
+    }
+
+    .url-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 12px;
+      padding: 8px 12px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    .url-input:focus {
+      border-color: var(--accent);
+    }
+
+    .url-input::placeholder {
+      color: var(--text3);
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-save {
+      flex: 1;
+      padding: 8px;
+      background: var(--accent);
+      color: #fff;
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .btn-save:hover {
+      opacity: 0.85;
+    }
+
+    .btn-save:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .btn-remove {
+      padding: 8px 12px;
+      background: transparent;
+      color: var(--text3);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 13px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .btn-remove:hover {
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    .feedback {
+      font-size: 12px;
+      margin-top: 6px;
+      min-height: 16px;
+      color: var(--green);
+    }
+
+    .feedback.error {
+      color: var(--red);
+    }
+
+    /* MANAGE SCREENS */
+    .app-group {
+      margin-bottom: 2.5rem;
+    }
+
+    .app-group-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .app-group-name {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .app-screen-count {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    .screens-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+    }
+
+    .screen-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .screen-preview {
+      width: 100%;
+      aspect-ratio: 9/18;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .screen-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .screen-placeholder {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .screen-ph-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .screen-ph-label {
+      font-size: 10px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .screen-delete-btn {
+      position: absolute;
+      top: 6px;
+      right: 6px;
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      background: rgba(255, 75, 75, 0.85);
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .screen-preview:hover .screen-delete-btn {
+      opacity: 1;
+    }
+
+    .screen-name-tag {
+      padding: 8px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+      border-top: 1px solid var(--border);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: text;
+    }
+
+    .screen-name-input {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-top: 1px solid var(--accent);
+      color: var(--text);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      text-align: center;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    /* ADD SCREEN CARD */
+    .add-screen-card {
+      background: var(--surface);
+      border: 1px dashed var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .add-screen-form {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      justify-content: center;
+    }
+
+    .add-screen-form label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 2px;
+    }
+
+    .add-screen-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 13px;
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .add-screen-input:focus {
+      border-color: var(--accent);
+    }
+
+    .add-screen-input::placeholder {
+      color: var(--text3);
+    }
+
+    .add-screen-upload {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+      text-align: center;
+      cursor: pointer;
+      font-size: 11px;
+      color: var(--text3);
+      position: relative;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .add-screen-upload:hover {
+      border-color: var(--accent);
+      color: var(--text2);
+    }
+
+    .add-screen-upload input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .add-preview-thumb {
+      width: 100%;
+      height: 120px;
+      background: var(--surface2);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      display: none;
+      margin-bottom: 4px;
+    }
+
+    .add-preview-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .add-preview-thumb.show {
+      display: block;
+    }
+
+    .btn-add {
+      width: 100%;
+      padding: 9px;
+      background: var(--surface2);
+      color: var(--text2);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-add:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-add:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    /* APPS LIST */
+    .app-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 8px;
+    }
+
+    .app-row-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .app-row-name {
+      font-size: 14px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .app-row-id {
+      font-size: 12px;
+      color: var(--text3);
+    }
+
+    .app-row-cat {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+      text-transform: capitalize;
+    }
+
+    .app-row-source {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .app-row-source.supabase {
+      background: rgba(45, 212, 170, 0.15);
+      color: var(--green);
+    }
+
+    .app-row-source.hardcoded {
+      background: rgba(90, 90, 85, 0.2);
+      color: var(--text3);
+    }
+
+    .app-row-delete {
+      padding: 6px 12px;
+      background: transparent;
+      color: var(--text3);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .app-row-delete:hover {
+      color: var(--red);
+      border-color: var(--red);
+    }
+
+    /* Toast */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      z-index: 999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav>
+    <div class="logo">Design<span>Boomi</span></div>
+    <span class="nav-tag">Admin Panel</span>
+  </nav>
+
+  <div id="auth-gate">
+    <div class="auth-card">
+      <h2>Admin Access</h2>
+      <p>Enter the password to manage images</p>
+      <input type="password" id="password-input" class="auth-input" placeholder="Password"
+        onkeydown="if(event.key==='Enter') checkPassword()">
+      <button class="btn-primary" onclick="checkPassword()">Enter</button>
+      <div class="auth-error" id="auth-error">Incorrect password</div>
+    </div>
+  </div>
+
+  <div id="main-content">
+    <div class="tabs-bar">
+      <button class="tab-btn active" onclick="switchTab('covers', this)">App Covers</button>
+      <button class="tab-btn" onclick="switchTab('screens', this)">Manage Screens</button>
+      <button class="tab-btn" onclick="switchTab('apps', this)">Apps</button>
+    </div>
+
+    <!-- TAB: APPS -->
+    <div class="tab-panel" id="tab-apps">
+      <div class="section-header">
+        <div>
+          <h2>Manage Apps</h2>
+          <p>Add or remove apps shown on the main page</p>
+        </div>
+        <div class="status-pill" id="apps-status">Loading...</div>
+      </div>
+
+      <!-- ADD APP FORM -->
+      <div
+        style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:24px;">
+        <div style="font-size:14px;font-weight:600;margin-bottom:16px;">Add New App</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto auto;gap:10px;align-items:end;">
+          <div>
+            <label
+              style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">App
+              Name</label>
+            <input type="text" id="new-app-name" class="url-input" style="margin:0" placeholder="e.g. Swiggy">
+          </div>
+          <div>
+            <label
+              style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">ID
+              (slug)</label>
+            <input type="text" id="new-app-id" class="url-input" style="margin:0" placeholder="e.g. swiggy">
+          </div>
+          <div>
+            <label
+              style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Category</label>
+            <select id="new-app-category" class="url-input" style="margin:0;cursor:pointer;">
+              <option value="fintech">Fintech</option>
+              <option value="food">Food</option>
+              <option value="ecomm">E-commerce</option>
+              <option value="edtech">EdTech</option>
+              <option value="travel">Travel</option>
+              <option value="health">Health</option>
+              <option value="social">Social</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label
+              style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:6px;">Brand
+              Color</label>
+            <input type="color" id="new-app-color" value="#FF5C2B"
+              style="width:44px;height:36px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface2);cursor:pointer;padding:2px;">
+          </div>
+          <button class="btn-save" style="height:36px;white-space:nowrap;" onclick="addApp()">+ Add App</button>
+        </div>
+        <div class="feedback" id="add-app-fb" style="margin-top:8px;"></div>
+      </div>
+
+      <!-- APPS LIST -->
+      <div id="apps-list"></div>
+    </div>
+
+    <!-- TAB: COVERS -->
+    <div class="tab-panel active" id="tab-covers">
+      <div class="section-header">
+        <div>
+          <h2>App Cover Images</h2>
+          <p>Shown on the main grid cards</p>
+        </div>
+        <div class="status-pill" id="covers-status">Loading...</div>
+      </div>
+      <div class="covers-grid" id="covers-grid"></div>
+    </div>
+
+    <!-- TAB: SCREENS -->
+    <div class="tab-panel" id="tab-screens">
+      <div class="section-header">
+        <div>
+          <h2>Manage Screens</h2>
+          <p>Add unlimited screen images per app — shown inside the detail modal</p>
+        </div>
+        <div class="status-pill" id="screens-status">Loading...</div>
+      </div>
+      <div id="screens-container"></div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://wlhgbmpjtpxzjcfyzxhn.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_P0cNTIVMw_Uxy5U95myPDw_XNtc99yO';
+    const ADMIN_PASSWORD = 'designboomi2024';
+
+    const APPS = [
+      { id: 'cred', app: 'CRED', category: 'fintech', color: '#E8B84B' },
+      { id: 'swiggy', app: 'Swiggy', category: 'food', color: '#FC8019' },
+      { id: 'phonepe', app: 'PhonePe', category: 'fintech', color: '#5F259F' },
+      { id: 'meesho', app: 'Meesho', category: 'ecomm', color: '#9B2335' },
+      { id: 'zepto', app: 'Zepto', category: 'food', color: '#7B2FF7' },
+      { id: 'zomato', app: 'Zomato', category: 'food', color: '#E23744' },
+      { id: 'yono', app: 'YONO SBI', category: 'fintech', color: '#2E5FA3' },
+      { id: 'unacademy', app: 'Unacademy', category: 'edtech', color: '#08BD80' },
+      { id: 'instamart', app: 'Swiggy Instamart', category: 'food', color: '#FC8019' },
+      { id: 'byjus', app: "Byju's", category: 'edtech', color: '#3E3E8F' },
+      { id: 'groww', app: 'Groww', category: 'fintech', color: '#00D09C' },
+      { id: 'juspay', app: 'Juspay', category: 'fintech', color: '#1565C0' },
+      { id: 'nykaa', app: 'Nykaa', category: 'ecomm', color: '#FC2779' },
+    ];
+
+    let db = null;
+    let covers = {};        // { appId: url }
+    let curatedScreens = {}; // { appId: [{id, screen_name, image_url}] }
+    let pendingUploads = {}; // { appId: { name, file, dataUrl } }
+
+    // ── AUTH ──────────────────────────────────────────────
+    function checkPassword() {
+      const val = document.getElementById('password-input').value;
+      if (val === ADMIN_PASSWORD) {
+        document.getElementById('auth-gate').style.display = 'none';
+        document.getElementById('main-content').style.display = 'block';
+        init();
+      } else {
+        document.getElementById('auth-error').style.display = 'block';
+      }
+    }
+
+    // ── TABS ──────────────────────────────────────────────
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    // ── INIT ──────────────────────────────────────────────
+    async function init() {
+      db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      await Promise.all([loadCovers(), loadCuratedScreens(), loadApps()]);
+      renderCoversGrid();
+      renderScreensContainer();
+      renderAppsList();
+    }
+
+    // ── APPS ──────────────────────────────────────────────
+    let supabaseApps = []; // apps stored in Supabase
+
+    async function loadApps() {
+      const { data, error } = await db.from('apps').select('*').order('created_at', { ascending: true });
+      if (error) { console.error(error.message); return; }
+      supabaseApps = data || [];
+      document.getElementById('apps-status').textContent =
+        `${APPS.length} built-in · ${supabaseApps.length} custom`;
+    }
+
+    function renderAppsList() {
+      const list = document.getElementById('apps-list');
+
+      const builtInHtml = APPS.map(app => `
+        <div class="app-row">
+          <div class="app-row-color" style="background:${app.color}"></div>
+          <div class="app-row-name">${app.app}</div>
+          <div class="app-row-id">${app.id}</div>
+          <div class="app-row-cat">${app.category}</div>
+          <span class="app-row-source hardcoded">Built-in</span>
+        </div>`).join('');
+
+      const customHtml = supabaseApps.length
+        ? supabaseApps.map(app => `
+          <div class="app-row" id="app-row-${app.id}">
+            <div class="app-row-color" style="background:${app.color}"></div>
+            <div class="app-row-name">${app.name}</div>
+            <div class="app-row-id">${app.id}</div>
+            <div class="app-row-cat">${app.category}</div>
+            <span class="app-row-source supabase">Custom</span>
+            <button class="app-row-delete" onclick="deleteApp('${app.id}')">Remove</button>
+          </div>`).join('')
+        : `<div style="font-size:13px;color:var(--text3);padding:16px 0;">No custom apps yet — add one above.</div>`;
+
+      list.innerHTML = `
+        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px;">Built-in Apps (${APPS.length})</div>
+        ${builtInHtml}
+        <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin:20px 0 10px;">Custom Apps (${supabaseApps.length})</div>
+        ${customHtml}`;
+    }
+
+    async function addApp() {
+      const name = document.getElementById('new-app-name').value.trim();
+      const id = document.getElementById('new-app-id').value.trim().toLowerCase().replace(/\s+/g, '-');
+      const category = document.getElementById('new-app-category').value;
+      const color = document.getElementById('new-app-color').value;
+
+      if (!name || !id) { setFb('add-app', '', 'Enter app name and ID', true); return; }
+
+      const btn = document.querySelector('#tab-apps .btn-save');
+      btn.disabled = true; btn.textContent = 'Adding...';
+
+      const { data, error } = await db.from('apps').insert({ id, name, category, color }).select().single();
+      btn.disabled = false; btn.textContent = '+ Add App';
+
+      if (error) { setFb('add-app', '', error.message, true); return; }
+
+      supabaseApps.push(data);
+      document.getElementById('new-app-name').value = '';
+      document.getElementById('new-app-id').value = '';
+      renderAppsList();
+      updateAppsStatus();
+      showToast(`✓ "${name}" added`);
+    }
+
+    async function deleteApp(appId) {
+      if (!confirm('Remove this app? Its screens and cover will still exist in Supabase.')) return;
+      const { error } = await db.from('apps').delete().eq('id', appId);
+      if (error) { showToast('Error: ' + error.message); return; }
+      supabaseApps = supabaseApps.filter(a => a.id !== appId);
+      renderAppsList();
+      updateAppsStatus();
+      showToast('App removed');
+    }
+
+    function updateAppsStatus() {
+      document.getElementById('apps-status').textContent =
+        `${APPS.length} built-in · ${supabaseApps.length} custom`;
+    }
+
+    function setFb(type, id, msg, isError) {
+      const elId = id ? `${type}-fb-${id}` : `${type}-fb`;
+      const el = document.getElementById(elId);
+      if (!el) return;
+      el.textContent = msg;
+      el.className = 'feedback' + (isError ? ' error' : '');
+      if (!isError) setTimeout(() => { el.textContent = ''; }, 3000);
+    }
+
+    // ── LOAD ──────────────────────────────────────────────
+    async function loadCovers() {
+      const { data, error } = await db.from('app_covers').select('*');
+      if (error) { console.error(error.message); return; }
+      covers = {};
+      (data || []).forEach(r => { covers[r.app_id] = r.cover_url; });
+      const count = Object.values(covers).filter(Boolean).length;
+      document.getElementById('covers-status').textContent = `${count} / ${APPS.length} apps covered`;
+    }
+
+    async function loadCuratedScreens() {
+      const { data, error } = await db.from('screens').select('*').eq('is_curated', true).order('created_at', { ascending: true });
+      if (error) { console.error(error.message); return; }
+      curatedScreens = {};
+      APPS.forEach(a => { curatedScreens[a.id] = []; });
+      (data || []).forEach(r => {
+        if (!curatedScreens[r.app_id]) curatedScreens[r.app_id] = [];
+        curatedScreens[r.app_id].push(r);
+      });
+      const total = Object.values(curatedScreens).reduce((n, arr) => n + arr.length, 0);
+      document.getElementById('screens-status').textContent = `${total} screens across ${APPS.length} apps`;
+    }
+
+    // ── RENDER COVERS ─────────────────────────────────────
+    function renderCoversGrid() {
+      const grid = document.getElementById('covers-grid');
+      grid.innerHTML = APPS.map(app => {
+        const initials = app.app.split(' ').map(w => w[0]).join('').slice(0, 2);
+        const url = covers[app.id] || '';
+        const has = !!url;
+        return `
+          <div class="cover-card" id="cover-card-${app.id}">
+            <div class="cover-preview" style="background:linear-gradient(135deg,${app.color}33 0%,${app.color}08 60%,#0C0C0E 100%)">
+              ${has
+            ? `<img src="${url}" id="cover-img-${app.id}" alt="${app.app}">`
+            : `<div class="cover-placeholder" id="cover-ph-${app.id}">
+                    <div class="cover-initials" style="color:${app.color}">${initials}</div>
+                    <div class="no-img-label">No cover</div>
+                  </div>`}
+            </div>
+            <div class="card-body">
+              <div class="card-title">
+                ${app.app}
+                <span class="img-status ${has ? 'live' : 'empty'}" id="cover-status-${app.id}">${has ? 'Live' : 'Empty'}</span>
+              </div>
+              <div class="card-sub">${app.category}</div>
+              <div class="upload-area">
+                <span>Click to upload</span>
+                <input type="file" accept="image/*" onchange="handleCoverUpload(event,'${app.id}')">
+              </div>
+              <div class="divider">or paste URL</div>
+              <input type="text" class="url-input" id="cover-url-${app.id}" placeholder="https://..." value="${url}">
+              <div class="card-actions">
+                <button class="btn-save" onclick="saveCover('${app.id}')">Save</button>
+                ${has ? `<button class="btn-remove" onclick="removeCover('${app.id}')">Remove</button>` : ''}
+              </div>
+              <div class="feedback" id="cover-fb-${app.id}"></div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── RENDER SCREENS CONTAINER ──────────────────────────
+    function renderScreensContainer() {
+      const container = document.getElementById('screens-container');
+      container.innerHTML = APPS.map(app => {
+        const initials = app.app.split(' ').map(w => w[0]).join('').slice(0, 2);
+        const screens = curatedScreens[app.id] || [];
+        const screensHtml = screens.map(s => `
+          <div class="screen-card" id="sc-${s.id}">
+            <div class="screen-preview" style="background:linear-gradient(160deg,${app.color}22 0%,#0C0C0E 100%)">
+              <img src="${s.image_url}" alt="${s.screen_name}">
+              <button class="screen-delete-btn" onclick="deleteScreen(${s.id},'${app.id}')" title="Delete">✕</button>
+            </div>
+            <div class="screen-name-tag" onclick="editScreenName(this, ${s.id}, '${app.id}')">${s.screen_name}</div>
+          </div>`).join('');
+
+        return `
+          <div class="app-group" id="app-group-${app.id}">
+            <div class="app-group-header">
+              <div class="app-dot" style="background:${app.color}"></div>
+              <div class="app-group-name">${app.app}</div>
+              <div class="app-screen-count" id="screen-count-${app.id}">${screens.length} screen${screens.length !== 1 ? 's' : ''}</div>
+            </div>
+            <div class="screens-row" id="screens-row-${app.id}">
+              ${screensHtml}
+              ${addScreenCard(app, initials)}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function addScreenCard(app, initials) {
+      return `
+        <div class="add-screen-card">
+          <div class="add-screen-form">
+            <div>
+              <label>Screen Name</label>
+              <input type="text" class="add-screen-input" id="add-name-${app.id}" placeholder="e.g. Home Feed">
+            </div>
+            <div>
+              <label>Image</label>
+              <div class="add-screen-upload">
+                <span id="add-upload-label-${app.id}">Click to upload screenshot</span>
+                <input type="file" accept="image/*" onchange="handleScreenFileSelect(event,'${app.id}')">
+              </div>
+            </div>
+            <div class="add-preview-thumb" id="add-thumb-${app.id}">
+              <img id="add-thumb-img-${app.id}" src="" alt="">
+            </div>
+            <div class="divider">or paste URL</div>
+            <input type="text" class="add-screen-input" id="add-url-${app.id}" placeholder="https://...">
+            <button class="btn-add" id="add-btn-${app.id}" onclick="addScreen('${app.id}')">+ Add Screen</button>
+            <div class="feedback" id="add-fb-${app.id}"></div>
+          </div>
+        </div>`;
+    }
+
+    // ── COVER UPLOAD ──────────────────────────────────────
+    function handleCoverUpload(event, appId) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById(`cover-url-${appId}`).value = e.target.result;
+        const existing = document.getElementById(`cover-img-${appId}`);
+        const ph = document.getElementById(`cover-ph-${appId}`);
+        if (existing) { existing.src = e.target.result; }
+        else {
+          if (ph) ph.remove();
+          const img = document.createElement('img');
+          img.src = e.target.result; img.id = `cover-img-${appId}`;
+          document.querySelector(`#cover-card-${appId} .cover-preview`).appendChild(img);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── SCREEN FILE SELECT ────────────────────────────────
+    function handleScreenFileSelect(event, appId) {
+      const file = event.target.files[0];
+      if (!file) return;
+      if (!pendingUploads[appId]) pendingUploads[appId] = {};
+      pendingUploads[appId].file = file;
+      pendingUploads[appId].dataUrl = null;
+      // show thumbnail
+      const reader = new FileReader();
+      reader.onload = e => {
+        pendingUploads[appId].dataUrl = e.target.result;
+        const thumb = document.getElementById(`add-thumb-${appId}`);
+        const thumbImg = document.getElementById(`add-thumb-img-${appId}`);
+        thumbImg.src = e.target.result;
+        thumb.classList.add('show');
+        document.getElementById(`add-upload-label-${appId}`).textContent = file.name;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // ── ADD SCREEN ────────────────────────────────────────
+    async function addScreen(appId) {
+      const name = document.getElementById(`add-name-${appId}`).value.trim();
+      const urlInput = document.getElementById(`add-url-${appId}`).value.trim();
+      const pending = pendingUploads[appId] || {};
+
+      if (!name) { setFb('add', appId, 'Enter a screen name', true); return; }
+
+      let imageUrl = urlInput;
+
+      // If file selected, upload to Supabase storage
+      if (!imageUrl && pending.file) {
+        const btn = document.getElementById(`add-btn-${appId}`);
+        btn.disabled = true; btn.textContent = 'Uploading...';
+        imageUrl = await uploadToStorage(pending.file, appId);
+        btn.disabled = false; btn.textContent = '+ Add Screen';
+        if (!imageUrl) { setFb('add', appId, 'Upload failed', true); return; }
+      }
+
+      if (!imageUrl) { setFb('add', appId, 'Upload an image or paste a URL', true); return; }
+
+      const btn = document.getElementById(`add-btn-${appId}`);
+      btn.disabled = true; btn.textContent = 'Saving...';
+
+      const { data, error } = await db.from('screens').insert({
+        app_id: appId,
+        screen_name: name,
+        image_url: imageUrl,
+        is_curated: true
+      }).select().single();
+
+      btn.disabled = false; btn.textContent = '+ Add Screen';
+
+      if (error) { setFb('add', appId, error.message, true); return; }
+
+      // Add to local state
+      if (!curatedScreens[appId]) curatedScreens[appId] = [];
+      curatedScreens[appId].push(data);
+
+      // Reset form
+      document.getElementById(`add-name-${appId}`).value = '';
+      document.getElementById(`add-url-${appId}`).value = '';
+      document.getElementById(`add-upload-label-${appId}`).textContent = 'Click to upload screenshot';
+      const thumb = document.getElementById(`add-thumb-${appId}`);
+      thumb.classList.remove('show');
+      pendingUploads[appId] = {};
+
+      // Re-render this app's row
+      refreshAppRow(appId);
+      updateScreensStatus();
+      showToast(`✓ "${name}" added to ${APPS.find(a => a.id === appId).app}`);
+    }
+
+    async function uploadToStorage(file, appId) {
+      try {
+        const compressed = await compressImage(file);
+        const path = `curated/${appId}/${Date.now()}.webp`;
+        const { error } = await db.storage.from('screenshots').upload(path, compressed, {
+          cacheControl: '3600', upsert: false, contentType: 'image/webp'
+        });
+        if (error) { console.error(error); return null; }
+        const { data } = db.storage.from('screenshots').getPublicUrl(path);
+        return data.publicUrl;
+      } catch (e) { console.error(e); return null; }
+    }
+
+    function compressImage(file, maxWidth = 1080, quality = 0.85) {
+      return new Promise(resolve => {
+        const img = new Image();
+        const url = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(url);
+          const scale = Math.min(1, maxWidth / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob(resolve, 'image/webp', quality);
+        };
+        img.src = url;
+      });
+    }
+
+    // ── DELETE SCREEN ─────────────────────────────────────
+    async function deleteScreen(screenId, appId) {
+      if (!confirm('Delete this screen?')) return;
+      const { error } = await db.from('screens').delete().eq('id', screenId);
+      if (error) { showToast('Error: ' + error.message); return; }
+      curatedScreens[appId] = (curatedScreens[appId] || []).filter(s => s.id !== screenId);
+      refreshAppRow(appId);
+      updateScreensStatus();
+      showToast('Screen deleted');
+    }
+
+    // ── REFRESH APP ROW ───────────────────────────────────
+    function refreshAppRow(appId) {
+      const app = APPS.find(a => a.id === appId);
+      const initials = app.app.split(' ').map(w => w[0]).join('').slice(0, 2);
+      const screens = curatedScreens[appId] || [];
+      const screensHtml = screens.map(s => `
+        <div class="screen-card" id="sc-${s.id}">
+          <div class="screen-preview" style="background:linear-gradient(160deg,${app.color}22 0%,#0C0C0E 100%)">
+            <img src="${s.image_url}" alt="${s.screen_name}">
+            <button class="screen-delete-btn" onclick="deleteScreen(${s.id},'${app.id}')" title="Delete">✕</button>
+          </div>
+          <div class="screen-name-tag">${s.screen_name}</div>
+        </div>`).join('');
+
+      const row = document.getElementById(`screens-row-${appId}`);
+      row.innerHTML = screensHtml + addScreenCard(app, initials);
+      document.getElementById(`screen-count-${appId}`).textContent = `${screens.length} screen${screens.length !== 1 ? 's' : ''}`;
+    }
+
+    // ── SAVE COVER ────────────────────────────────────────
+    async function saveCover(appId) {
+      const url = document.getElementById(`cover-url-${appId}`).value.trim();
+      if (!url) { setFb('cover', appId, 'Add an image first', true); return; }
+      const btn = document.querySelector(`#cover-card-${appId} .btn-save`);
+      btn.disabled = true; btn.textContent = 'Saving...';
+      const { error } = await db.from('app_covers').upsert({ app_id: appId, cover_url: url }, { onConflict: 'app_id' });
+      btn.disabled = false; btn.textContent = 'Save';
+      if (error) { setFb('cover', appId, error.message, true); return; }
+      covers[appId] = url;
+      document.getElementById(`cover-status-${appId}`).textContent = 'Live';
+      document.getElementById(`cover-status-${appId}`).className = 'img-status live';
+      setFb('cover', appId, 'Saved!', false);
+      updateCoversStatus();
+      showToast(`✓ ${APPS.find(a => a.id === appId).app} cover saved`);
+    }
+
+    async function removeCover(appId) {
+      if (!confirm('Remove this cover?')) return;
+      await db.from('app_covers').delete().eq('app_id', appId);
+      covers[appId] = '';
+      await loadCovers();
+      renderCoversGrid();
+      showToast('Cover removed');
+    }
+
+    // ── HELPERS ───────────────────────────────────────────
+    function _setFbUnused(type, id, msg, isError) { // replaced by unified setFb above
+    }
+
+    function updateCoversStatus() {
+      const count = Object.values(covers).filter(Boolean).length;
+      document.getElementById('covers-status').textContent = `${count} / ${APPS.length} apps covered`;
+    }
+
+    function updateScreensStatus() {
+      const total = Object.values(curatedScreens).reduce((n, arr) => n + arr.length, 0);
+      document.getElementById('screens-status').textContent = `${total} screens across ${APPS.length} apps`;
+    }
+
+    function editScreenName(el, screenId, appId) {
+      const current = el.textContent.trim();
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = current;
+      input.className = 'screen-name-input';
+      el.replaceWith(input);
+      input.focus();
+      input.select();
+
+      async function save() {
+        const newName = input.value.trim() || current;
+        const { error } = await db.from('screens').update({ screen_name: newName }).eq('id', screenId);
+        const tag = document.createElement('div');
+        tag.className = 'screen-name-tag';
+        tag.textContent = newName;
+        tag.onclick = () => editScreenName(tag, screenId, appId);
+        input.replaceWith(tag);
+        if (!error) {
+          const s = (curatedScreens[appId] || []).find(s => s.id === screenId);
+          if (s) s.screen_name = newName;
+          if (newName !== current) showToast('Name updated');
+        } else {
+          showToast('Error: ' + error.message);
+        }
+      }
+
+      input.addEventListener('blur', save);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+        if (e.key === 'Escape') { input.value = current; input.blur(); }
+      });
+    }
+
+    function showToast(msg, duration = 2500) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), duration);
+    }
+  </script>
+
+</body>
+
+</html>
