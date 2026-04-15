@@ -761,6 +761,96 @@
       border-color: var(--red);
     }
 
+    /* SCREEN STAR BUTTON */
+    .screen-star-btn {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: rgba(12, 12, 14, 0.75);
+      color: var(--text3);
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.15s, color 0.15s, background 0.15s;
+    }
+
+    .screen-preview:hover .screen-star-btn {
+      opacity: 1;
+    }
+
+    @media (hover: none) {
+      .screen-star-btn {
+        opacity: 1;
+      }
+    }
+
+    .screen-star-btn.active {
+      opacity: 1;
+      color: #F5A623;
+      background: rgba(245, 166, 35, 0.15);
+    }
+
+    .screen-home-badge {
+      position: absolute;
+      bottom: 6px;
+      left: 6px;
+      font-size: 9px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: rgba(245, 166, 35, 0.9);
+      color: #000;
+      padding: 2px 6px;
+      border-radius: 4px;
+      pointer-events: none;
+    }
+
+    /* INLINE LOGO ROW (inside Manage Screens) */
+    .app-logo-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .app-logo-row-label {
+      font-size: 11px;
+      color: var(--text3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .btn-save-sm {
+      padding: 6px 12px;
+      background: var(--surface2);
+      color: var(--text2);
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .btn-save-sm:hover {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
     /* Toast */
     #toast {
       position: fixed;
@@ -806,8 +896,7 @@
 
   <div id="main-content">
     <div class="tabs-bar">
-      <button class="tab-btn active" onclick="switchTab('covers', this)">App Covers</button>
-      <button class="tab-btn" onclick="switchTab('screens', this)">Manage Screens</button>
+      <button class="tab-btn active" onclick="switchTab('screens', this)">Manage Screens</button>
       <button class="tab-btn" onclick="switchTab('apps', this)">Apps</button>
     </div>
 
@@ -869,19 +958,8 @@
     </div>
 
     <!-- TAB: COVERS -->
-    <div class="tab-panel active" id="tab-covers">
-      <div class="section-header">
-        <div>
-          <h2>App Cover Images</h2>
-          <p>Shown on the main grid cards</p>
-        </div>
-        <div class="status-pill" id="covers-status">Loading...</div>
-      </div>
-      <div class="covers-grid" id="covers-grid"></div>
-    </div>
-
     <!-- TAB: SCREENS -->
-    <div class="tab-panel" id="tab-screens">
+    <div class="tab-panel active" id="tab-screens">
       <div class="section-header">
         <div>
           <h2>Manage Screens</h2>
@@ -931,7 +1009,6 @@
     async function init() {
       db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
       await Promise.all([loadCovers(), loadCuratedScreens(), loadApps()]);
-      renderCoversGrid();
       renderScreensContainer();
       renderAppsList();
     }
@@ -1019,8 +1096,6 @@
         covers[r.app_id] = r.cover_url;
         logos[r.app_id] = r.logo_url || '';
       });
-      const count = Object.values(covers).filter(Boolean).length;
-      document.getElementById('covers-status').textContent = `${count} / ${supabaseApps.length} apps covered`;
     }
 
     async function loadCuratedScreens() {
@@ -1036,76 +1111,14 @@
       document.getElementById('screens-status').textContent = `${total} screens across ${supabaseApps.length} apps`;
     }
 
-    // ── RENDER COVERS ─────────────────────────────────────
-    function renderCoversGrid() {
-      const grid = document.getElementById('covers-grid');
-      grid.innerHTML = supabaseApps.map(app => {
-        const initials = app.name.split(' ').map(w => w[0]).join('').slice(0, 2);
-        const url = covers[app.id] || '';
-        const has = !!url;
-        return `
-          <div class="cover-card" id="cover-card-${app.id}">
-            <div class="cover-preview" style="background:linear-gradient(135deg,${app.color}33 0%,${app.color}08 60%,#0C0C0E 100%)">
-              ${has
-            ? `<img src="${url}" id="cover-img-${app.id}" alt="${app.name}">`
-            : `<div class="cover-placeholder" id="cover-ph-${app.id}">
-                    <div class="cover-initials" style="color:${app.color}">${initials}</div>
-                    <div class="no-img-label">No cover</div>
-                  </div>`}
-            </div>
-            <div class="card-body">
-              <div class="card-title">
-                ${app.name}
-                <span class="img-status ${has ? 'live' : 'empty'}" id="cover-status-${app.id}">${has ? 'Live' : 'Empty'}</span>
-              </div>
-              <div class="card-sub">${app.category}</div>
-              <div class="upload-area">
-                <span>Click to upload cover</span>
-                <input type="file" accept="image/*" onchange="handleCoverUpload(event,'${app.id}')">
-              </div>
-              <div class="divider">or paste URL</div>
-              <input type="text" class="url-input" id="cover-url-${app.id}" placeholder="https://..." value="${url}">
-              <div class="card-actions">
-                <button class="btn-save" onclick="saveCover('${app.id}')">Save Cover</button>
-                ${has ? `<button class="btn-remove" onclick="removeCover('${app.id}')">Remove</button>` : ''}
-              </div>
-              <div class="feedback" id="cover-fb-${app.id}"></div>
-
-              <div class="divider">App Logo</div>
-              <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-                ${logos[app.id]
-                  ? `<img src="${logos[app.id]}" id="logo-preview-${app.id}" style="width:40px;height:40px;border-radius:10px;object-fit:cover;border:1px solid var(--border)">`
-                  : `<div id="logo-preview-${app.id}" style="width:40px;height:40px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3)">?</div>`}
-                <div class="upload-area" style="flex:1;margin:0;">
-                  <span>Upload logo</span>
-                  <input type="file" accept="image/*" onchange="handleLogoUpload(event,'${app.id}')">
-                </div>
-              </div>
-              <input type="text" class="url-input" id="logo-url-${app.id}" placeholder="https://logo.png" value="${logos[app.id] || ''}">
-              <div class="card-actions">
-                <button class="btn-save" onclick="saveLogo('${app.id}')">Save Logo</button>
-                ${logos[app.id] ? `<button class="btn-remove" onclick="removeLogo('${app.id}')">Remove</button>` : ''}
-              </div>
-              <div class="feedback" id="logo-fb-${app.id}"></div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
     // ── RENDER SCREENS CONTAINER ──────────────────────────
     function renderScreensContainer() {
       const container = document.getElementById('screens-container');
       container.innerHTML = supabaseApps.map(app => {
         const initials = app.name.split(' ').map(w => w[0]).join('').slice(0, 2);
         const screens = curatedScreens[app.id] || [];
-        const screensHtml = screens.map(s => `
-          <div class="screen-card" id="sc-${s.id}">
-            <div class="screen-preview" style="background:linear-gradient(160deg,${app.color}22 0%,#0C0C0E 100%)">
-              <img src="${s.image_url}" alt="${s.screen_name}">
-              <button class="screen-delete-btn" onclick="deleteScreen(${s.id},'${app.id}')" title="Delete">✕</button>
-            </div>
-            <div class="screen-name-tag" onclick="editScreenName(this, ${s.id}, '${app.id}')">${s.screen_name}</div>
-          </div>`).join('');
+        const screensHtml = screens.map(s => screenCardHtml(s, app)).join('');
+        const logoUrl = logos[app.id] || '';
 
         return `
           <div class="app-group" id="app-group-${app.id}">
@@ -1114,12 +1127,39 @@
               <div class="app-group-name">${app.name}</div>
               <div class="app-screen-count" id="screen-count-${app.id}">${screens.length} screen${screens.length !== 1 ? 's' : ''}</div>
             </div>
+            <div class="app-logo-row" id="logo-row-s-${app.id}">
+              <span class="app-logo-row-label">Logo</span>
+              ${logoUrl
+                ? `<img src="${logoUrl}" id="logo-preview-s-${app.id}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`
+                : `<div id="logo-preview-s-${app.id}" style="width:36px;height:36px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);flex-shrink:0">?</div>`}
+              <div class="upload-area" style="margin:0;padding:5px 10px;font-size:11px;flex-shrink:0;position:relative;">
+                <span>Upload</span>
+                <input type="file" accept="image/*" onchange="handleLogoUploadScreens(event,'${app.id}')">
+              </div>
+              <input type="text" class="url-input" id="logo-url-s-${app.id}" placeholder="https://logo.png" value="${logoUrl}" style="flex:1;min-width:120px;margin:0;font-size:12px;padding:6px 10px;">
+              <button class="btn-save-sm" onclick="saveLogoScreens('${app.id}')">Save Logo</button>
+              <div class="feedback" id="logo-fb-s-${app.id}"></div>
+            </div>
             <div class="screens-row" id="screens-row-${app.id}">
               ${screensHtml}
               ${addScreenCard(app, initials)}
             </div>
           </div>`;
       }).join('');
+    }
+
+    function screenCardHtml(s, app) {
+      const isHome = covers[app.id] && covers[app.id] === s.image_url;
+      return `
+        <div class="screen-card" id="sc-${s.id}">
+          <div class="screen-preview" style="background:linear-gradient(160deg,${app.color}22 0%,#0C0C0E 100%)">
+            <img src="${s.image_url}" alt="${s.screen_name}">
+            <button class="screen-star-btn ${isHome ? 'active' : ''}" onclick="setAsCover('${s.image_url}','${app.id}')" title="${isHome ? 'Home screen' : 'Set as home screen'}">${isHome ? '★' : '☆'}</button>
+            ${isHome ? '<div class="screen-home-badge">Home</div>' : ''}
+            <button class="screen-delete-btn" onclick="deleteScreen(${s.id},'${app.id}')" title="Delete">✕</button>
+          </div>
+          <div class="screen-name-tag" onclick="editScreenName(this, ${s.id}, '${app.id}')">${s.screen_name}</div>
+        </div>`;
     }
 
     function addScreenCard(app, initials) {
@@ -1287,14 +1327,7 @@
       const app = supabaseApps.find(a => a.id === appId);
       const initials = app.name.split(' ').map(w => w[0]).join('').slice(0, 2);
       const screens = curatedScreens[appId] || [];
-      const screensHtml = screens.map(s => `
-        <div class="screen-card" id="sc-${s.id}">
-          <div class="screen-preview" style="background:linear-gradient(160deg,${app.color}22 0%,#0C0C0E 100%)">
-            <img src="${s.image_url}" alt="${s.screen_name}">
-            <button class="screen-delete-btn" onclick="deleteScreen(${s.id},'${app.id}')" title="Delete">✕</button>
-          </div>
-          <div class="screen-name-tag">${s.screen_name}</div>
-        </div>`).join('');
+      const screensHtml = screens.map(s => screenCardHtml(s, app)).join('');
 
       const row = document.getElementById(`screens-row-${appId}`);
       row.innerHTML = screensHtml + addScreenCard(app, initials);
@@ -1325,6 +1358,47 @@
       await loadCovers();
       renderCoversGrid();
       showToast('Cover removed');
+    }
+
+    // ── SET AS HOME COVER (from Manage Screens) ───────────
+    async function setAsCover(imageUrl, appId) {
+      const { error } = await db.from('app_covers').upsert({ app_id: appId, cover_url: imageUrl }, { onConflict: 'app_id' });
+      if (error) { showToast('Error: ' + error.message); return; }
+      covers[appId] = imageUrl;
+      refreshAppRow(appId);
+      updateCoversStatus();
+      showToast(`✓ Home screen set for ${supabaseApps.find(a => a.id === appId)?.name}`);
+    }
+
+    // ── LOGO INLINE (Manage Screens tab) ─────────────────
+    async function handleLogoUploadScreens(e, appId) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const url = await uploadToStorage(file, appId + '-logo');
+      if (!url) { showToast('Upload failed'); return; }
+      document.getElementById(`logo-url-s-${appId}`).value = url;
+      const preview = document.getElementById(`logo-preview-s-${appId}`);
+      preview.outerHTML = `<img src="${url}" id="logo-preview-s-${appId}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`;
+    }
+
+    async function saveLogoScreens(appId) {
+      const url = document.getElementById(`logo-url-s-${appId}`).value.trim();
+      const fb = document.getElementById(`logo-fb-s-${appId}`);
+      function showFbS(msg, isError) {
+        if (!fb) return;
+        fb.textContent = msg;
+        fb.className = 'feedback' + (isError ? ' error' : '');
+        if (!isError) setTimeout(() => { fb.textContent = ''; }, 3000);
+      }
+      if (!url) { showFbS('Add a logo first', true); return; }
+      const { error } = await db.from('app_covers').upsert({ app_id: appId, logo_url: url }, { onConflict: 'app_id' });
+      if (error) { showFbS(error.message, true); return; }
+      logos[appId] = url;
+      // sync preview within the same logo row
+      const preview = document.getElementById(`logo-preview-s-${appId}`);
+      if (preview) { preview.src = url; if (preview.tagName === 'DIV') preview.outerHTML = `<img src="${url}" id="logo-preview-s-${appId}" style="width:36px;height:36px;border-radius:8px;object-fit:cover;border:1px solid var(--border);flex-shrink:0">`; }
+      showFbS('Logo saved!', false);
+      showToast(`✓ ${supabaseApps.find(a => a.id === appId)?.name} logo saved`);
     }
 
     // ── LOGO ──────────────────────────────────────────────
@@ -1360,10 +1434,7 @@
     function _setFbUnused(type, id, msg, isError) { // replaced by unified setFb above
     }
 
-    function updateCoversStatus() {
-      const count = Object.values(covers).filter(Boolean).length;
-      document.getElementById('covers-status').textContent = `${count} / ${supabaseApps.length} apps covered`;
-    }
+    function updateCoversStatus() { /* covers tab removed */ }
 
     function updateScreensStatus() {
       const total = Object.values(curatedScreens).reduce((n, arr) => n + arr.length, 0);
