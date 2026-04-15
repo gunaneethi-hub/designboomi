@@ -2376,6 +2376,20 @@
       document.querySelector('meta[name="description"]').setAttribute('content',
         `Browse real UI screens from ${currentApp.app}. Discover design patterns and flows from India's top apps — DesignBoomi.`);
       document.querySelector('link[rel="canonical"]').setAttribute('href', `https://www.designboomi.com/${slug}`);
+      document.querySelector('meta[property="og:url"]').setAttribute('content', `https://www.designboomi.com/${slug}`);
+      document.querySelector('meta[property="og:title"]').setAttribute('content', `${currentApp.app} UI Screens — DesignBoomi Inspire`);
+      document.querySelector('meta[property="og:description"]').setAttribute('content',
+        `Browse real UI screens from ${currentApp.app}. Discover design patterns and flows from India's top apps.`);
+      document.querySelector('meta[name="twitter:title"]').setAttribute('content', `${currentApp.app} UI Screens — DesignBoomi Inspire`);
+      document.querySelector('meta[name="twitter:description"]').setAttribute('content',
+        `Browse real UI screens from ${currentApp.app} on DesignBoomi — India's UI design inspiration library.`);
+      document.querySelector('script[type="application/ld+json"]').textContent = JSON.stringify({
+        "@context": "https://schema.org", "@type": "CollectionPage",
+        "name": `${currentApp.app} UI Screens`,
+        "url": `https://www.designboomi.com/${slug}`,
+        "description": `Real UI screens from ${currentApp.app}. Browse design patterns and flows from India's top apps.`,
+        "publisher": { "@type": "Organization", "name": "DesignBoomi", "url": "https://www.designboomi.com" }
+      });
 
       const initials = currentApp.app.split(' ').map(w => w[0]).join('').slice(0, 2);
       const iconEl = document.getElementById('detail-app-icon');
@@ -2401,7 +2415,21 @@
       document.title = "DesignBoomi Inspire — India's UI Design Library";
       document.querySelector('meta[name="description"]').setAttribute('content',
         "Browse real UI screens from India's top apps — Swiggy, PhonePe, Zepto, Groww, Nykaa and more. Discover onboarding, checkout, and payment flows for design inspiration.");
-      document.querySelector('link[rel="canonical"]').setAttribute('href', 'https://www.designboomi.com/inspire');
+      document.querySelector('link[rel="canonical"]').setAttribute('href', 'https://www.designboomi.com/');
+      document.querySelector('meta[property="og:url"]').setAttribute('content', 'https://www.designboomi.com/');
+      document.querySelector('meta[property="og:title"]').setAttribute('content', "DesignBoomi Inspire — India's UI Design Library");
+      document.querySelector('meta[property="og:description"]').setAttribute('content',
+        "Browse real UI screens from India's top apps — Swiggy, PhonePe, Zepto, Groww, Nykaa and more.");
+      document.querySelector('meta[name="twitter:title"]').setAttribute('content', "DesignBoomi Inspire — India's UI Design Library");
+      document.querySelector('meta[name="twitter:description"]').setAttribute('content',
+        "Browse real UI screens from India's top apps — Swiggy, PhonePe, Zepto, Groww and more.");
+      document.querySelector('script[type="application/ld+json"]').textContent = JSON.stringify({
+        "@context": "https://schema.org", "@type": "WebSite",
+        "name": "DesignBoomi Inspire",
+        "url": "https://www.designboomi.com/",
+        "description": "India's UI design inspiration library — real screens from top Indian apps",
+        "publisher": { "@type": "Organization", "name": "DesignBoomi", "url": "https://www.designboomi.com" }
+      });
     }
 
     function closeModal(e) { }
