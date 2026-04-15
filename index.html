@@ -69,9 +69,10 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap" rel="stylesheet">
+  <link rel="preload" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap" rel="stylesheet"></noscript>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #171717;
@@ -2068,19 +2069,20 @@
       return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
     }
 
-    // Supabase setup
+    // Supabase setup — deferred until DOMContentLoaded so the deferred
+    // supabase script has executed before we call window.supabase.createClient
     const SUPABASE_URL = 'https://wlhgbmpjtpxzjcfyzxhn.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_P0cNTIVMw_Uxy5U95myPDw_XNtc99yO';
     let dbClient = null;
-    try {
-      dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-        realtime: { params: { eventsPerSecond: 0 } }
-      });
-      // Disconnect realtime — this app doesn't use live subscriptions,
-      // and the open WebSocket prevents Chrome from throttling the tab.
-      dbClient.realtime.disconnect();
-    } catch (e) {
-      console.error('Supabase init failed:', e);
+    function initSupabase() {
+      try {
+        dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+          realtime: { params: { eventsPerSecond: 0 } }
+        });
+        dbClient.realtime.disconnect();
+      } catch (e) {
+        console.error('Supabase init failed:', e);
+      }
     }
 
     async function loadMobileApps() {
@@ -2232,7 +2234,7 @@
         const seeMore = `<div class="phone-see-more"><span class="see-more-cta">View all screens</span></div>`;
 
         const frameContent = coverUrl
-          ? `<img src="${coverUrl}" alt="${app.app} UI screens" loading="lazy">${seeMore}`
+          ? `<img src="${coverUrl}" alt="${app.app} UI screens" loading="${i < 6 ? 'eager' : 'lazy'}" ${i < 6 ? 'fetchpriority="high"' : ''}>${seeMore}`
           : `<div class="phone-placeholder" style="background:${app.color}0D">
                <div style="width:60px;height:60px;border-radius:16px;background:${app.color}22;border:1px solid ${app.color}44;display:flex;align-items:center;justify-content:center;font-family:'Bricolage Grotesque',sans-serif;font-size:24px;font-weight:700;color:${app.color}">${initials}</div>
                <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em">${count} screen${count !== 1 ? 's' : ''}</div>
@@ -2710,7 +2712,7 @@ Identify as many real colors as visible. Be specific about components you see. R
       btn.disabled = false;
     }
 
-    // Init — show phone skeletons immediately, then render real content
+    // Show skeletons immediately (no Supabase needed)
     (function showSkeletons() {
       const grid = document.getElementById('card-grid');
       const skel = `
@@ -2720,18 +2722,22 @@ Identify as many real colors as visible. Be specific about components you see. R
         </div>`;
       grid.innerHTML = skel.repeat(12);
     })();
-    Promise.all([loadMobileApps(), loadAppCovers(), loadScreenCounts()])
-      .catch(e => console.error('Init error:', e))
-      .finally(() => {
-        MOBILE_APPS.sort((a, b) => (appScreenCounts[b.id] || 0) - (appScreenCounts[a.id] || 0));
-        filterCards();
-        // Open app if URL is /swiggy, /phonepe, etc.
-        const slug = window.location.pathname.replace(/^\//, '');
-        if (slug) {
-          const match = MOBILE_APPS.find(a => toSlug(a.app) === slug);
-          if (match) openApp(match.id);
-        }
-      });
+
+    // Init Supabase + load data after deferred scripts have run
+    document.addEventListener('DOMContentLoaded', () => {
+      initSupabase();
+      Promise.all([loadMobileApps(), loadAppCovers(), loadScreenCounts()])
+        .catch(e => console.error('Init error:', e))
+        .finally(() => {
+          MOBILE_APPS.sort((a, b) => (appScreenCounts[b.id] || 0) - (appScreenCounts[a.id] || 0));
+          filterCards();
+          const slug = window.location.pathname.replace(/^\//, '');
+          if (slug) {
+            const match = MOBILE_APPS.find(a => toSlug(a.app) === slug);
+            if (match) openApp(match.id);
+          }
+        });
+    });
 
     // Handle browser back/forward
     window.addEventListener('popstate', () => {
