@@ -60,9 +60,9 @@
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300;12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap" rel="stylesheet">
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #171717;
@@ -1908,8 +1908,7 @@
 
   <!-- NAV -->
   <nav>
-    <div class="logo">Design<span>Boomi</span> <span
-        style="color:var(--text3);font-weight:400;font-size:14px;margin-left:4px;">Inspire</span></div>
+    <div class="logo">Design<span>Boomi</span></div>
     <div class="nav-right">
       <span class="nav-badge">MVP Beta</span>
     </div>
@@ -2061,7 +2060,12 @@
     const SUPABASE_KEY = 'sb_publishable_P0cNTIVMw_Uxy5U95myPDw_XNtc99yO';
     let dbClient = null;
     try {
-      dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      dbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        realtime: { params: { eventsPerSecond: 0 } }
+      });
+      // Disconnect realtime — this app doesn't use live subscriptions,
+      // and the open WebSocket prevents Chrome from throttling the tab.
+      dbClient.realtime.disconnect();
     } catch (e) {
       console.error('Supabase init failed:', e);
     }
@@ -2069,7 +2073,7 @@
     async function loadMobileApps() {
       if (!dbClient) return;
       try {
-        const { data, error } = await dbClient.from('apps').select('*').order('created_at', { ascending: true });
+        const { data, error } = await dbClient.from('apps').select('id, name, category, color, created_at').order('created_at', { ascending: true });
         if (error) { console.error(error); return; }
         MOBILE_APPS = (data || []).map(a => ({ id: a.id, app: a.name, category: a.category, color: a.color }));
       } catch (e) { console.error(e); }
@@ -2080,9 +2084,10 @@
       try {
         const { data, error } = await dbClient
           .from('screens')
-          .select('*')
+          .select('id, screen_name, image_url')
           .eq('app_id', appId)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .limit(200);
         if (error) { console.error(error); return []; }
         return (data || []).map(s => ({
           id: 'up_' + s.id,
@@ -2173,7 +2178,7 @@
     async function loadAppCovers() {
       if (!dbClient) return;
       try {
-        const { data } = await dbClient.from('app_covers').select('*');
+        const { data } = await dbClient.from('app_covers').select('app_id, cover_url, logo_url');
         (data || []).forEach(r => {
           appCovers[r.app_id] = r.cover_url;
           appLogos[r.app_id] = r.logo_url || '';
@@ -2184,7 +2189,8 @@
     async function loadScreenCounts() {
       if (!dbClient) return;
       try {
-        const { data } = await dbClient.from('screens').select('app_id');
+        // Fetch only app_id with a reasonable cap; counts are used for display only.
+        const { data } = await dbClient.from('screens').select('app_id').limit(5000);
         (data || []).forEach(r => {
           appScreenCounts[r.app_id] = (appScreenCounts[r.app_id] || 0) + 1;
         });
@@ -2193,7 +2199,6 @@
 
     function buildGrid(apps) {
       const grid = document.getElementById('card-grid');
-      apps = [...apps].sort((a, b) => (appScreenCounts[b.id] || 0) - (appScreenCounts[a.id] || 0));
       if (!apps.length) {
         grid.innerHTML = '<div style="color:var(--text3);padding:2rem;grid-column:1/-1">No apps found.</div>';
         return;
@@ -2212,7 +2217,7 @@
              </div>${seeMore}`;
         const logoUrl = appLogos[app.id] || '';
         const iconHtml = logoUrl
-          ? `<img src="${logoUrl}" alt="${app.app}">`
+          ? `<img src="${logoUrl}" alt="${app.app}" loading="lazy">`
           : `<span style="color:${app.color};font-size:15px;font-weight:700;font-family:'Bricolage Grotesque',sans-serif">${initials}</span>`;
         return `
         <div class="phone-card" style="animation-delay:${i * 0.05}s" onclick="openApp('${app.id}')">
@@ -2289,11 +2294,11 @@
       document.getElementById('lightbox-counter').textContent = `${lightboxIndex + 1} / ${screens.length}`;
       document.getElementById('lb-prev').disabled = lightboxIndex === 0;
       document.getElementById('lb-next').disabled = lightboxIndex === screens.length - 1;
-      document.getElementById('lightbox').classList.add('open');
+      lightboxEl.classList.add('open');
     }
 
     function closeLightbox() {
-      document.getElementById('lightbox').classList.remove('open');
+      lightboxEl.classList.remove('open');
       document.getElementById('lightbox-img').src = '';
     }
 
@@ -2326,8 +2331,9 @@
       }
     }
 
+    const lightboxEl = document.getElementById('lightbox');
     document.addEventListener('keydown', e => {
-      if (!document.getElementById('lightbox').classList.contains('open')) return;
+      if (!lightboxEl.classList.contains('open')) return;
       if (e.key === 'ArrowLeft')  lightboxNav(-1);
       if (e.key === 'ArrowRight') lightboxNav(1);
       if (e.key === 'Escape')     closeLightbox();
@@ -2336,7 +2342,9 @@
     async function openApp(appId) {
       currentApp = MOBILE_APPS.find(a => a.id === appId);
       if (!currentApp) return;
-      uploadedScreens[appId] = await loadScreensFromSupabase(appId);
+      if (!uploadedScreens[appId]) {
+        uploadedScreens[appId] = await loadScreensFromSupabase(appId);
+      }
       currentScreen = null;
 
       const initials = currentApp.app.split(' ').map(w => w[0]).join('').slice(0, 2);
@@ -2651,7 +2659,10 @@ Identify as many real colors as visible. Be specific about components you see. R
     })();
     Promise.all([loadMobileApps(), loadAppCovers(), loadScreenCounts()])
       .catch(e => console.error('Init error:', e))
-      .finally(() => filterCards());
+      .finally(() => {
+        MOBILE_APPS.sort((a, b) => (appScreenCounts[b.id] || 0) - (appScreenCounts[a.id] || 0));
+        filterCards();
+      });
   </script>
 </body>
 
