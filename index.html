@@ -2127,13 +2127,22 @@
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const compressed = await compressImage(file);
-        const path = `${appId}/${Date.now()}_${i}.jpg`;
-        let screenName = file.name.replace(/\.[^.]+$/, '') || `Screen ${Date.now()}`;
 
-        if (/^(img|screenshot|image)[_-]?\d+/i.test(screenName)) {
+        // Clean file name into a readable title — single source for both URL and alt text
+        let screenName = file.name
+          .replace(/\.[^.]+$/, '')                     // strip extension
+          .replace(/[_\-]+/g, ' ')                     // underscores/hyphens → spaces
+          .replace(/\s+/g, ' ').trim()                 // collapse whitespace
+          .replace(/\b\w/g, c => c.toUpperCase());     // Title Case
+
+        if (!screenName || /^(img|screenshot|image)\s*\d+$/i.test(screenName)) {
           const count = (uploadedScreens[appId] || []).length;
           screenName = `Screen ${count + i + 1}`;
         }
+
+        // Build SEO-friendly storage path from the same screen name
+        const slug = screenName.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        const path = `${appId}/${slug}-${Date.now()}.jpg`;
 
         const { error: upErr } = await dbClient.storage
           .from('screenshots')
